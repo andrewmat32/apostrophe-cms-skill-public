@@ -291,11 +291,17 @@ Add to the widget above a `showMode` select (`selected`/`latest`) and:
         }
     },
     // ⚠️ defer: true is the real lazy option — `deferred: true` is a silent no-op
-    methods( self )
+    // ⚠️ load() must EXTEND the base — core widget-type's load() is what joins
+    // schema relationships (schema.relate). A methods()-level load() replaces it,
+    // so widget._testimonials would NEVER populate and the "selected" branch
+    // below would be silently dead. (A methods()-level load() is only viable
+    // when the widget queries by its ids storage and never reads joined _fields.)
+    extendMethods( self )
     {
         return {
-            async load( req, widgets )
+            async load( _super, req, widgets )
             {
+                await _super( req, widgets );
                 for( const widget of widgets )
                 {
                     if( widget.showMode === 'selected' && widget._testimonials?.length )
@@ -326,10 +332,9 @@ Template:
 <div id="testimonials-widget" data-playerdata="{{ data.widget.playerData | jsonAttribute }}">
 ```
 
-Variant: if the repo shapes widget data in `output()` overrides instead of
-`load()`, it MUST be `extendMethods` with the FULL signature (a
+The same extend-don't-replace rule applies to `output()` overrides — a
 `methods()`-style `output()` silently replaces whatever the project layered
-into the render chain):
+into the render chain:
 
 ```js
 extendMethods( self )

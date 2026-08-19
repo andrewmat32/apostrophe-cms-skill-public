@@ -32,9 +32,73 @@ node ~/.claude/skills/apostrophe-cms/tests/verify.js
 node ~/.claude/skills/apostrophe-cms/tests/verify-docs.js
 ```
 
-Entry point for agents: `SKILL.md`. One-page syntax reference:
-`CHEATSHEET.md`. Human manual (install, agents, maintenance): `GUIDE.md`.
-Copy-paste cookbook for every element type: `references/examples.md`.
+## What's in the box
+
+| Piece | What it is |
+|---|---|
+| `SKILL.md` | The skill entry point agents load: hard rules, convention-discovery step, reference router, common-mistakes table. |
+| `CHEATSHEET.md` | One-page syntax reference for quick lookups. |
+| `GUIDE.md` | The human manual: install, how the agents cooperate, maintenance workflow. |
+| `CHANGELOG.md` | What changed and which field test taught it. |
+| `references/` | Nine deep-dive references (below) loaded on demand, per task. |
+| `agents/` | Seven specialist subagent definitions (below). |
+| `tools/` | Two mechanical analyzers runnable on any Apostrophe repo (below). |
+| `tests/` | The self-verification suites (below). |
+
+### References (loaded per task, routed from SKILL.md)
+
+| Reference | Covers |
+|---|---|
+| `module-anatomy.md` | Widgets, pieces, piece-pages, page types, services, schema fields, rich-text configuration. |
+| `relationships.md` | Joining doc types, `_fields`, reverse/nested relationships, projections and their traps. |
+| `frontend-backend-flow.md` | AJAX endpoints, `apiRoutes`/`renderRoutes`, route mounting (incl. the page-type action trap), server→browser data. |
+| `templating-fragments.md` | Fragments vs macros, `__t()` i18n, areas, template conventions. |
+| `client-js.md` | Widget players, `ui/src` entries, vite bundles, Alpine/htmx decisions, scoping. |
+| `services-and-data.md` | External APIs, caching, Mongo access, settings. |
+| `globals-config-and-scoping.md` | Config layers, the global doc, `req.data`, window vs shared vs player JS. |
+| `mechanisms-and-ops.md` | CLI tasks, event handlers, async components, seeding, admin-UI customization, images, errors, deployment (incl. `release-id`). |
+| `examples.md` | Copy-paste cookbook: a working starting point for every element type. |
+
+### The seven agents
+
+Five **producers**, each scoped to one layer and emitting a handoff note (its
+data/DOM/class contract) for the next:
+
+| Agent | Layer | Writes |
+|---|---|---|
+| `apostrophe-backend` | Modules, pieces, piece-pages, schemas, relationships, endpoints (server half), tasks, caching | `modules/*/index.js` |
+| `apostrophe-templates` | Nunjucks: fragments, widget/page/piece templates, areas, i18n keys | `views/**`, `modules/**/views/**` |
+| `apostrophe-frontend` | Widget players, `ui/src` browser JS, vite bundles, AJAX calls from the browser | `modules/*/ui/src/*.js` |
+| `apostrophe-design` | SCSS partials, the global cascade, responsive/visual design | `**/*.scss` |
+| `apostrophe-admin-ui` | Admin bar, modals, `ui/apos` Vue components, icons, launcher registries | `modules/*/ui/apos/**` |
+
+Two read-only **verifiers**:
+
+| Agent | Checks |
+|---|---|
+| `apostrophe-integrator` | Traces a feature's full vertical slice (registration → relationships → backend→template data → DOM hooks → JS→endpoint/bundling → SCSS classes) and reports each link LINKED or BROKEN, with live-boot evidence. |
+| `apostrophe-reviewer` | Audits a diff/module against the hard rules and the known silent-failure defect patterns; verdict APPROVE / APPROVE-WITH-NITS / REQUEST-CHANGES. |
+
+Recommended pipeline for cross-layer features: **backend → templates →
+frontend + design in parallel → integrator → reviewer**, pasting each agent's
+handoff note verbatim into the next agent's prompt (subagents share no
+context). Admin-facing work swaps the middle: backend → admin-ui. In field
+tests this pipeline built complete multi-locale sites, and the integrator has
+repeatedly caught real cross-layer bugs the producer chain missed.
+
+### Tools
+
+| Tool | What it does |
+|---|---|
+| `tools/lint-apos.js <repo>` | Mechanical lint for the silent-failure traps listed above; safe to run on any Apostrophe repo, no boot required. |
+| `tools/slice-map.js <repo> <module>` | Prints a module's full vertical slice grouped by the integrator's link numbers (registration → relationships → templates → DOM hooks → bundles/players → SCSS), plus i18n-parity rows. |
+
+### Tests
+
+| Suite | What it pins |
+|---|---|
+| `tests/verify.js` | The skill's own integrity: reference router targets exist, agent frontmatter parses, tools parse, sanitization pins hold; plus generic sanity checks on any repo path you pass as an argument. |
+| `tests/verify-docs.js` | Every official API/syntax claim the skill teaches, checked against the official docs pages and Apostrophe core source (set `APOS_CORE_PATH` or run near a `node_modules/apostrophe`). |
 
 ## Provenance
 

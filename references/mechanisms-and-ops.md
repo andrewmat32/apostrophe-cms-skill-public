@@ -41,6 +41,11 @@ indexQuery` respectively. Check the repo's precedent first; don't introduce a
 second mechanism where one already exists. Every project's `release` script
 should run `node app.js @apostrophecms/migration:migrate` after build.
 
+A production `asset:build` (NODE_ENV=production) requires a release id: core
+autodetects the current git commit / HEROKU_RELEASE_VERSION / PLATFORM_TREE_ID,
+but in a checkout with no `.git` it errors out — set `APOS_RELEASE_ID` or write
+a short unique string to a tracked `release-id` file (field-proven).
+
 ## Admin UI customization — the escalation ladder (least invasive first)
 
 1. **DOM-observing `ui/apos/apps/*.js`** (vanilla, not Vue):
@@ -72,6 +77,25 @@ scaffold): the `apostrophe-admin-ui` agent definition.
   `fs.statSync` → `apos.attachment.insert( req, file )` → create the image
   piece with a slugified title. Stamp seeded docs (`seeded: true`-style) so
   reruns can find them.
+
+## Seeding content programmatically (field-proven traps)
+
+- Insert via the module API with a **draft req**
+  (`apos.task.getReq( { mode: 'draft' } )`), then `publish( req, doc )` each
+  doc — pieces and pages alike.
+- **Set relationships via the relationship FIELD** (`_author: [ authorDoc ]`),
+  never by writing the ids storage (`authorIds`) directly: `publish()`
+  re-derives relationship storage from the schema field, so a manual
+  `authorIds` write is silently DROPPED from the published copy and every
+  join comes back empty.
+- **Hand-built area objects need their OWN `_id`**:
+  `{ _id: apos.util.generateId(), metaType: 'area', items: [ ... ] }` — and
+  each widget item needs `{ _id, metaType: 'widget', type: '<name>' }`. A
+  missing area `_id` makes core throw at render time, and Apostrophe serves
+  its error template **with HTTP 200** — so verify seeded pages by their
+  CONTENT, never by status code.
+- Make seeds idempotent (upsert by slug / check a `seeded: true` stamp) —
+  a blind re-run duplicates content.
 
 ## Errors, email, logging
 

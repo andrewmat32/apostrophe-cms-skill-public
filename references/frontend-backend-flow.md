@@ -11,7 +11,21 @@ it. Where the repo shows no precedent, use the official patterns below.
   response: a returned object is sent as JSON; a returned **string is sent
   verbatim as the response body** (that's how raw-HTML endpoints work).
   - **Named routes** (`async thing( req )`) mount under
-    `/api/v1/<module-name>/<route>` (core: the module's `action` URL).
+    `/api/v1/<module-name>/<route>` (core: the module's `action` URL) — and
+    core KEBAB-CASES the name in the URL (`getRouteUrl` → `cssName`):
+    `loadMore` mounts at `/load-more`. A hand-built endpoint string using the
+    camelCase name 404s (field-proven); derive URLs as
+    `` `${ self.action }/kebab-name` `` or better, let `apos.http` callers
+    take the URL from server-provided data you computed correctly once.
+    - ⚠ **Page-type modules are the exception**: every `@apostrophecms/page-type`
+      subclass shares the `@apostrophecms/page` action (core overrides
+      `enableAction()` with `self.action = apos.modules['@apostrophecms/page'].action`
+      in `page-type/index.js`), so a named route `submit` on a `contact-page`
+      page-type mounts at `/api/v1/@apostrophecms/page/submit` — the "obvious"
+      `/api/v1/contact-page/submit` 404s (field-proven). Fix: use a
+      leading-slash name (`'/api/v1/contact-page/submit'`) so the route is
+      site-relative, or host the route on a non-page module (e.g. the piece
+      type it inserts). Piece and plain modules are unaffected.
   - **Leading-slash names** (`'/loadThings'`) are literal site-relative URLs —
     core treats a name starting with `/` as the exact URL. Some production
     codebases use this for public visitor endpoints and keep `/api/v1` named
@@ -59,8 +73,12 @@ const result = await apos.http.post( '/api/v1/product/feature', { body: { id } }
 Bare AND leading-slash template names resolve to the module's own `views/`
 first — a leading slash does NOT mean "project views". Project-level `views/`
 subdirectories are reachable only because they fall through module resolution.
-Render the same template the page render used, so initial and AJAX HTML stay
-identical.
+Render the same markup source the page render used, so initial and AJAX HTML
+stay identical — and note the CONTEXT difference: data passed to
+`self.render( req, 'x.html', { items } )` is exposed to the template as
+`data.items`, not bare `items`. The robust shared-markup shape is a fragment
+both templates import; the AJAX target is then a thin wrapper looping
+`data.items` and rendering the fragment.
 
 ## Security floor for every handler
 

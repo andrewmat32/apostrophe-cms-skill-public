@@ -64,6 +64,9 @@ apiRoutes( self ) { return { post: {
     }
 } }; }
 // browser: apos.http.post( '/api/v1/<module>/adminThing', { body } )  — CSRF handled
+// ⚠ page-type modules share @apostrophecms/page's action: their named routes mount at
+// /api/v1/@apostrophecms/page/<route> — use a leading-slash name ('/api/v1/<module>/<route>')
+// for a page-type route that must live at its own URL
 ```
 Launder ALL input: `self.apos.launder.string( req.body.x )`. Markup-swap endpoints return raw HTML, never JSON.
 

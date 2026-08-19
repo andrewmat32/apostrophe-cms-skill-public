@@ -189,6 +189,8 @@ async function fetchText(url) {
             coreContains('modules/@apostrophecms/module/index.js', /substring\(0, 1\) === '\/'|name\.substring\( ?0, ?1 ?\) === '\/'/));
         check('core: named routes resolve under /api/v1/<module> (action)',
             coreContains('modules/@apostrophecms/module/index.js', '/api/v1/'));
+        check("core: page-type subclasses share @apostrophecms/page's action (enableAction override)",
+            coreContains('modules/@apostrophecms/page-type/index.js', "['@apostrophecms/page'].action"));
         check('core: defer is the real widget lazy option (options.defer)',
             coreContains('modules/@apostrophecms/doc-type/index.js', 'options.defer'));
         check("core: 'options.deferred' does not exist (defer is the real option)",

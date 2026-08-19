@@ -108,12 +108,15 @@ export default {
 ## Widget-type module
 
 See references/examples.md for the full shape. Key correctness points:
-- Widgets that need server-side data use `load( req, widgets )` in `methods`
-  (batch over the widgets array), or shape data in an `output()` override.
-- An `output()` override MUST be `extendMethods` with the full
-  `_super( req, widget, options, _with )` call — a `methods()`-style `output()`
-  silently replaces (and thereby bypasses) anything the project layered into
-  the render chain.
+- Widgets that need server-side data use `load( req, widgets )` (batch over
+  the widgets array), or shape data in an `output()` override.
+- **Both `load()` and `output()` overrides MUST be `extendMethods` with the
+  full `_super` call** when the widget has schema relationships or the project
+  layers render behavior: core widget-type's `load()` is what joins schema
+  relationships (`schema.relate`) — a `methods()`-level `load()` replaces it,
+  so the widget's `_fields` silently never populate. A `methods()`-level
+  `load()` is only viable when the widget queries by its ids storage and never
+  reads joined `_fields`.
 - Area options: `options.widgets` keyed by widget name minus `-widget` (core
   behavior); per-widget options inside the map are normal (`contextual: true`,
   image `sizes`); `expanded: true` +

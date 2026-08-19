@@ -350,9 +350,11 @@ for (const f of htmlFiles) {
 }
 for (const f of jsFiles) {
     const src = read(f);
+    const b = blankOf(f);
+    // scan the comment/string-blanked copy so `._field[0]` in a comment can't fire
     let m; const re = /\._([a-zA-Z][\w]*)\[0\]/g;
     const seen = new Set();
-    while ((m = re.exec(src))) {
+    while ((m = re.exec(b))) {
         const before = src.slice(Math.max(0, m.index - 2), m.index + 1);
         if (before.includes('?')) continue; // ?.[0] handled by preceding optional chain — approximate
         const name = m[1];

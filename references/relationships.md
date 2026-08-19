@@ -80,6 +80,13 @@ join silently doesn't run — `?.[0]` then hides the failure as an empty render
 (a real-world bug class: an autocomplete projecting `title/_url` only, then
 reading `_category?.[0]?.title` and always getting `''`).
 
+Same trap, different field: **`aposDocId` is never auto-projected** (core adds
+only `type`, `metaType` and relationship ids-storage to a projection). If
+downstream code reads `doc.aposDocId` off query results — exclude-id lists,
+`data-*` attributes — name `aposDocId: 1` explicitly, in query projections AND
+relationship `builders.project` alike (field-proven: missing it yields
+`excludeIds: [null, …]` and silent duplicate content).
+
 ## Querying BY relationship: use the ids storage, not the joined docs
 
 Every relationship stores a `<name minus _>Ids` array (+ `...Fields`). Mongo
