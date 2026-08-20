@@ -27,6 +27,7 @@
  *       `x._f[0] if x._f | length else …` (guard follows the use on the
  *       same line) — both are the house-endorsed guard idioms.
  *   W2  SCSS partial never imported by the global index.scss
+ *   W4  2+ locales configured but no template builds a language switcher
  *   I1  file reads `req.body.*` without any laundering
  *
  * Structure detection (brace matching, key scanning) runs on a comment- and
@@ -380,6 +381,46 @@ for (const assetRoot of ['modules/asset/ui/src', 'modules/@apostrophecms/asset/u
         // whole-segment match: `nav` must not be satisfied by `navbar`
         const refd = new RegExp(`(^|[/'"\\s])_?${escapeRe(base)}(['"/\\s;]|$)`, 'm').test(idx);
         if (!refd) add('WARN', f, 1, 'W2', `partial '_${base}.scss' is not referenced by index.scss — it never loads`);
+    }
+}
+
+/* ---------- W4: multi-locale project with no visitor language switcher ---------- */
+{
+    // Locales are declared on the @apostrophecms/i18n module override. Count the
+    // keys of its `locales:` object; 2+ locales means visitors need a way to
+    // switch, and core's data.localizations is the mechanism that provides it.
+    const i18nIndex = path.join(repo, 'modules/@apostrophecms/i18n/index.js');
+    if (fs.existsSync(i18nIndex)) {
+        const src = read(i18nIndex);
+        const block = src.match(/locales\s*:\s*\{/);
+        if (block) {
+            // brace-match the locales object, then count top-level keys in it
+            const start = block.index + block[0].length - 1;
+            let depth = 0, end = start;
+            for (let i = start; i < src.length; i++) {
+                if (src[i] === '{') depth++;
+                else if (src[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+            }
+            const body = src.slice(start + 1, end);
+            const localeKeys = new Set();
+            const keyRe = /(^|[{,])\s*(?:'([\w-]+)'|"([\w-]+)"|([\w-]+))\s*:/g;
+            let depth2 = 0, km;
+            // only count keys at depth 0 of the locales object
+            for (let i = 0; i < body.length; i++) {
+                if (body[i] === '{') depth2++;
+                else if (body[i] === '}') depth2--;
+            }
+            const flat = body.replace(/\{[^{}]*\}/g, '{}');
+            while ((km = keyRe.exec(flat))) localeKeys.add(km[2] || km[3] || km[4]);
+            if (localeKeys.size > 1) {
+                const templates = walk(repo).filter(f => f.endsWith('.html'));
+                const hasSwitcher = templates.some(f => /data\.localizations/.test(read(f)));
+                if (!hasSwitcher) {
+                    add('WARN', i18nIndex, lineOf(src, block.index), 'W4',
+                        `${localeKeys.size} locales configured but no template reads 'data.localizations' — visitors have no way to switch language`);
+                }
+            }
+        }
     }
 }
 

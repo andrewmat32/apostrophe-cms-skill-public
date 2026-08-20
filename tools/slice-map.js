@@ -220,7 +220,18 @@ if (keys.length) {
     const locales = [ ...walk(path.join(REPO, 'modules')) ].filter(f => /i18n[\\/].*\.json$/.test(f));
     const dicts = locales.map(f => ({ f: rel(f), d: (() => { try { return JSON.parse(read(f)); } catch (e) { return {}; } })() }));
     for (const k of keys) {
-        const missing = dicts.filter(({ d }) => !(k in d)).map(({ f }) => f);
-        console.log(`  L-i18n      '${k}' ${missing.length === 0 ? 'in all locales' : missing.length === dicts.length ? 'MISSING EVERYWHERE' : 'missing in: ' + missing.join(', ')}`);
+        // A key may be namespaced ('ns:key'). Locale JSONs store the BARE key,
+        // and a namespace maps to an i18n/<ns>/ directory. Comparing the full
+        // namespaced key against bare dictionary keys reported every key in a
+        // namespaced project as missing (field-proven false positive).
+        const sep = k.indexOf(':');
+        const ns = sep === -1 ? null : k.slice(0, sep);
+        const bare = sep === -1 ? k : k.slice(sep + 1);
+        // Prefer dictionaries whose path matches the namespace; fall back to all.
+        const scoped = ns ? dicts.filter(({ f }) => f.replace(/\\/g, '/').includes(`/i18n/${ns}/`)) : [];
+        const pool = scoped.length ? scoped : dicts;
+        const missing = pool.filter(({ d }) => !(bare in d)).map(({ f }) => f);
+        const where = ns && scoped.length ? ` [ns ${ns}]` : '';
+        console.log(`  L-i18n      '${k}'${where} ${missing.length === 0 ? 'in all locales' : missing.length === pool.length ? 'MISSING EVERYWHERE' : 'missing in: ' + missing.join(', ')}`);
     }
 } else console.log('  L-i18n      (no __t() keys in module views)');

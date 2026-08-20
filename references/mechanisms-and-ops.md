@@ -35,6 +35,9 @@ projects forbid app tasks entirely (destructive against a live dev DB).
 
 Async components (`components( self )` + `{% component %}`), programmatic
 migrations (`apos.migration.add`), and `queries( self, query )` custom builders
+(a `{ def, launder, finalize }` triad, plus optional `choices`; a boolean
+builder's false branch should tolerate `$exists: false` so docs predating the
+field don't silently vanish)
 are all official and fine — but many production codebases solve the same
 problems with AJAX endpoints, CLI-task seeders, and `extendMethods →
 indexQuery` respectively. Check the repo's precedent first; don't introduce a
@@ -59,7 +62,16 @@ a short unique string to a tracked `release-id` file (field-proven).
    `self.apos.modal.add( name, 'ModalComponent', { moduleName } )`; icons must
    first be mapped in the module's `icons: { 'x-icon': 'MaterialName' }`
    section. Admin-bar groups are configured in app.js.
-4. **File-shadowing core Vue** (last resort): same filename under
+4. **Manager & context operations**: `utilityOperations` (a piece-type cascade,
+   like `fields`) adds buttons to the piece-manager modal;
+   `self.apos.doc.addContextOperation( { action, label, modal, … } )` adds an
+   entry to a document's context menu; piece types also support batch
+   operations. Reach for these before shadowing a core Vue file.
+5. **Swap one module's component**: `options: { components: { manager:
+   'MyManager' } }` — core resolves component names through
+   `options.components[ name ]`, so ONLY that module changes.
+6. **File-shadowing core Vue** (true last resort — it replaces the component for
+   **every** module, not just yours): same filename under
    `ui/apos/components/`.
 5. Data to admin UI: `self.enableBrowserData()` + `getBrowserData( req )`.
 6. User feedback: `self.apos.notify( req, msg, { type, dismiss } )`.
@@ -75,7 +87,8 @@ scaffold): the `apostrophe-admin-ui` agent definition.
   `<picture>`/srcset for anything content-sized, and preload the LCP image.
 - Server-side upload (seed/import paths): build a multer-like object from
   `fs.statSync` → `apos.attachment.insert( req, file )` → create the image
-  piece with a slugified title. Stamp seeded docs (`seeded: true`-style) so
+  piece with `slug: apos.util.slugify( title )` (a core util, also available as a
+  template helper). Stamp seeded docs (`seeded: true`-style) so
   reruns can find them.
 
 ## Seeding content programmatically (field-proven traps)
@@ -83,6 +96,11 @@ scaffold): the `apostrophe-admin-ui` agent definition.
 - Insert via the module API with a **draft req**
   (`apos.task.getReq( { mode: 'draft' } )`), then `publish( req, doc )` each
   doc — pieces and pages alike.
+- **Seed date/time fields as STRINGS, not `Date` objects.** A seeder that writes
+  through `manager.update()` bypasses `convert()`, so `new Date(x)` stores a BSON
+  Date — but the admin UI path launders the same field to a **string**. The first
+  editor save then flips the stored type, and sorts and range queries silently
+  see mixed types. Seed exactly what `convert()` would store.
 - **Set relationships via the relationship FIELD** (`_author: [ authorDoc ]`),
   never by writing the ids storage (`authorIds`) directly: `publish()`
   re-derives relationship storage from the schema field, so a manual
@@ -99,7 +117,19 @@ scaffold): the `apostrophe-admin-ui` agent definition.
 
 ## Errors, email, logging
 
-- Transactional mail: a dedicated mailer service module (nodemailer or an API
+- To inject markup into `<head>` or `<body>` from a module (meta tags,
+  structured data, a stylesheet link), use core's
+  `self.apos.template.appendNodes( 'head', 'my-module', 'myNodesMethod' )` /
+  `prependNodes( ... )` instead of editing `layout.html`. The third argument is
+  the **name** of a method on that module (a string — passing a function
+  throws), and the module must be registered.
+- Transactional mail: core ships `@apostrophecms/email`, which gives every
+  module `self.email( req, 'template.html', data, { to, subject } )` — it
+  renders from that module's own `views/` and sends through the transport you
+  configure once via its `nodemailer` option. Some projects instead push mail
+  into an external queue or CRM; follow the repo. Either way transport secrets
+  stay out of tracked files.
+- Alternatively a dedicated mailer service module (nodemailer or an API
   transport) with secrets encrypted at rest — never inline SMTP config in
   feature code, never a secret in a tracked file.
 - Error reporting to external services: dedupe repeats (increment a counter on
@@ -110,6 +140,11 @@ scaffold): the `apostrophe-admin-ui` agent definition.
   under a supervisor (PM2 etc.).
 
 ## SEO / sitemap / robots / redirects
+
+Extend `@apostrophecms/seo` through its own API rather than hand-rolling head
+tags: `self.registerSchema( 'TechArticle', generatorFn )` adds a JSON-LD schema
+type, its `seoFieldMappings` option maps your schema fields onto schema.org
+properties, and a per-document `seoRobots` field drives the robots meta tag.
 
 Use and **extend** the official modules, never reimplement them:
 `@apostrophecms/seo`, `@apostrophecms/sitemap`

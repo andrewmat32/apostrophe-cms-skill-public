@@ -191,6 +191,73 @@ async function fetchText(url) {
             coreContains('modules/@apostrophecms/module/index.js', '/api/v1/'));
         check("core: page-type subclasses share @apostrophecms/page's action (enableAction override)",
             coreContains('modules/@apostrophecms/page-type/index.js', "['@apostrophecms/page'].action"));
+        check('core: @apostrophecms/styles module declares the styles cascade (global styles, 4.26+)',
+            coreContains('modules/@apostrophecms/styles/index.js', "cascades: [ 'styles' ]"));
+        check('core: widget-type carries a styles cascade (per-widget styles)',
+            coreContains('modules/@apostrophecms/widget-type/index.js', /cascades:.*'styles'/));
+        check('core: stylesWrapper option controls automatic widget style wrapping',
+            coreContains('modules/@apostrophecms/widget-type/index.js', 'stylesWrapper'));
+        check('core: style presets include layoutGap, boxShadow and background',
+            coreContains('modules/@apostrophecms/styles/lib/presets.js', 'layoutGap') &&
+            coreContains('modules/@apostrophecms/styles/lib/presets.js', 'boxShadow') &&
+            coreContains('modules/@apostrophecms/styles/lib/presets.js', 'background'));
+        check('core: a style value beginning with -- is emitted as var(--x)',
+            coreContains('modules/@apostrophecms/styles/ui/apos/universal/render.mjs', 'var(${fieldValue})'));
+        check('core: polymorphic withType arrays still fall through to single-type getManager (do NOT use)',
+            coreContains('modules/@apostrophecms/schema/index.js', 'if (Array.isArray(relationship.withType)) {'));
+        check('core: min/required are not enforced server-side for relationships',
+            coreContains('modules/@apostrophecms/schema/lib/addFieldTypes.js', '"min" and "required" are not enforced server-side for relationships'));
+        check('core: relationship subfields arrive as _fields on each joined doc',
+            coreContains('modules/@apostrophecms/schema/lib/joinr.js', '_fields: fieldsById[id] || {}'));
+        check('core: layout widget still exposes grid geometry + cell alignment options',
+            coreContains('modules/@apostrophecms/layout-widget/index.js', 'defaultCellHorizontalAlignment'));
+        check('core: layoutGap preset still writes --apos-layout-gap at :root',
+            coreContains('modules/@apostrophecms/styles/lib/presets.js', "property: '--apos-layout-gap'"));
+        check('core: layout grid CSS resolves gap via --grid-gap then --apos-layout-gap',
+            coreContains('modules/@apostrophecms/layout-widget/ui/src/layout.css', 'gap: var(--grid-gap, var(--apos-layout-gap,'));
+        check('core: box/color/oembed field types keep their registered names',
+            coreContains('modules/@apostrophecms/box-field/index.js', "name: 'box',") &&
+            coreContains('modules/@apostrophecms/color-field/index.js', "name: 'color',") &&
+            coreContains('modules/@apostrophecms/oembed-field/index.js', "name: 'oembed',"));
+        check('core: conditional field keys are exactly if and requiredIf',
+            coreContains('modules/@apostrophecms/schema/index.js', "const conditionTypes = [ 'if', 'requiredIf' ];"));
+        check('core: readOnly fields are skipped entirely by convert',
+            coreContains('modules/@apostrophecms/schema/index.js', 'if (field.readOnly) {'));
+        check('core: apos.notify aliases the notification module trigger method',
+            coreContains('modules/@apostrophecms/notification/index.js', 'self.apos.notify = self.trigger'));
+        check('core: notify signature is trigger(req, message, options, interpolate)',
+            coreContains('modules/@apostrophecms/notification/index.js', 'async trigger(req, message, options = {}, interpolate = {})'));
+        check('core: submitted-draft review state is written by doc-type submit()',
+            coreContains('modules/@apostrophecms/doc-type/index.js', 'async submit(req, draft)'));
+        check('core: contributors see only their own submitted drafts',
+            coreContains('modules/@apostrophecms/submitted-draft/index.js', "'submitted.byId': req.user && req.user._id"));
+        check('core: piece types default to a G,<letter> manager shortcut overridable via options.shortcut',
+            coreContains('modules/@apostrophecms/doc-type/index.js', 'shortcut: self.options.shortcut ??'));
+        check('core: apos.http busy option drives the busy overlay',
+            coreContains('modules/@apostrophecms/util/ui/src/http.js', "const busyName = options.busy === true ? 'busy' : options.busy;"));
+        check('core: .archived() tri-state is decided in finalize from query.get',
+            coreContains('modules/@apostrophecms/doc-type/index.js', "const archived = query.get('archived');"));
+        check('core: attachment ships the imageSizes cascade with the six-name ladder',
+            coreContains('modules/@apostrophecms/attachment/index.js', "cascades: [ 'imageSizes' ]") &&
+            coreContains('modules/@apostrophecms/attachment/index.js', "'one-sixth': {"));
+        check("core: apos.attachment.url defaults to the 'full' size for images",
+            coreContains('modules/@apostrophecms/attachment/index.js', "effectiveSize = options.size || 'full'"));
+        check('core: apos.image.srcset exists and takes (attachment, cropFields)',
+            coreContains('modules/@apostrophecms/image/index.js', 'srcset(attachment, cropFields)'));
+        check('core: focal point is exposed as object-position, not baked into the URL',
+            coreContains('modules/@apostrophecms/attachment/index.js', 'focalPointToObjectPosition(attachment) {'));
+        check('core: archived attachments keep only the one-sixth preview size',
+            coreContains('modules/@apostrophecms/attachment/index.js', "self.options.sizeAvailableInArchive || 'one-sixth'"));
+        check('core: video widget resolves embeds through the oembed proxy at runtime',
+            coreContains('modules/@apostrophecms/video-widget/ui/src/index.js', '/api/v1/@apostrophecms/oembed/query'));
+        check('core: global stylesheet is rendered on save and mirrored onto the global doc',
+            coreContains('modules/@apostrophecms/styles/lib/handlers.js', 'stylesStylesheet: css'));
+        check('core: widget styles are merged into the SAME flat schema as fields (addStylesFields)',
+            coreContains('modules/@apostrophecms/widget-type/index.js', 'addStylesFields()'));
+        check('core BUG WATCH: box-field toCss still joins declarations with a bare space (no ;) — asymmetric boxes emit invalid CSS',
+            coreContains('modules/@apostrophecms/box-field/index.js', "parts.join(' ')"));
+        check('core: template view watcher is skipped on WSL (template edits need a restart there)',
+            coreContains('modules/@apostrophecms/template/lib/viewWatcher.js', 'if (isWsl)'));
         check('core: defer is the real widget lazy option (options.defer)',
             coreContains('modules/@apostrophecms/doc-type/index.js', 'options.defer'));
         check("core: 'options.deferred' does not exist (defer is the real option)",

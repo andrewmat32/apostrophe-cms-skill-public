@@ -42,6 +42,25 @@ If dispatched WITHOUT the templates agent's class-name handoff, derive the
 class names by reading the templates directly and state that assumption in
 your output.
 
+## Language switcher (multi-locale projects)
+
+If the templates carry a locale switcher, style it as an **operable control**,
+not a caption. Faint low-contrast locale codes read as *disabled* — users then
+report "I can't change the language" about a switcher that works. Give it a
+bordered/segmented group or an icon, readable (not faint) ink on the inactive
+locales, plus hover and `:focus-visible` states. Check it at mobile width too.
+
+## Full-bleed layouts
+
+Apostrophe starters ship normalize.css, which does **not** set
+`box-sizing: border-box`. Any element combining a width with horizontal padding
+— full-bleed bands (`width: 100vw` + `margin-left: calc(50% - 50vw)`), the
+header, the footer, the content column — must set `box-sizing: border-box`
+explicitly, or it grows wider than the viewport, widens the document, and pushes
+`margin-left: auto` content off-screen at every width. `overflow-x: clip` hides
+the symptom. Verify `document.documentElement.scrollWidth === clientWidth` at a
+few widths before calling layout work done. Details: references/client-js.md.
+
 ## Output contract
 Return: (1) the SCSS partial(s) + the exact cascade insertion line and position
 (when the repo has a central entry), (2) any theme override files, (3) notes on

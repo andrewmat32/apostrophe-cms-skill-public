@@ -126,6 +126,40 @@ function skillIntegrityChecks() {
     const refFiles = fs.readdirSync(path.join(SKILL, 'references')).filter(f => f.endsWith('.md'));
     for (const f of refFiles) {
         check(`integrity: references/${f} is reachable from SKILL.md`, skillMd.includes(`references/${f}`));
+
+    // ---- Cross-reference integrity -------------------------------------
+    // A citation that points at a file or a numbered trap which does not exist
+    // is a silent documentation bug. Field-proven: a partial port left a
+    // "schema-fields.md trap 19" pointer whose target trap had not been ported.
+    {
+        const docFiles = [ 'SKILL.md', 'CHEATSHEET.md', 'GUIDE.md',
+            ...refFiles.map(f => `references/${f}`),
+            ...fs.readdirSync(path.join(SKILL, 'agents')).filter(f => f.endsWith('.md')).map(f => `agents/${f}`) ];
+        let danglingFile = 0;
+        let danglingTrap = 0;
+        for (const df of docFiles) {
+            const src = read(df);
+            if (!src) continue;
+            // 1. every references/<name>.md cited anywhere must exist
+            for (const m of src.matchAll(/references\/([\w-]+\.md)/g)) {
+                if (!fs.existsSync(path.join(SKILL, 'references', m[1]))) {
+                    danglingFile++;
+                    console.log(`  FAIL  integrity: ${df} cites missing references/${m[1]}`);
+                }
+            }
+            // 2. "<file>.md trap N" must resolve to a list item numbered N there
+            for (const m of src.matchAll(/references\/([\w-]+\.md)[^\n]{0,20}?trap (\d+)/gi)) {
+                const target = read(`references/${m[1]}`);
+                if (target === null) continue; // already reported above
+                if (!new RegExp(`^${m[2]}\\. `, 'm').test(target)) {
+                    danglingTrap++;
+                    console.log(`  FAIL  integrity: ${df} cites ${m[1]} trap ${m[2]}, which does not exist there`);
+                }
+            }
+        }
+        check('integrity: no citation points at a missing reference file', danglingFile === 0);
+        check('integrity: no citation points at a missing numbered trap', danglingTrap === 0);
+    }
     }
 
     // Seven agent definitions with valid frontmatter

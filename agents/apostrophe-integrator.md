@@ -52,12 +52,25 @@ selects exists in the rendered markup, and every attribute the template emits
 for JS is consumed. Serialized data: built server-side ⇄ emitted with
 `jsonAttribute` (or as kebab `data-*` attributes) ⇄ parsed by the consuming JS.
 
+Report unconsumed hooks explicitly: an attribute emitted for JS that nothing
+reads is a dead contract, not a harmless extra.
+
 **L5. Frontend → backend contract.** Every URL the JS posts to has a matching
 route (`apiRoutes`/`routes`); request body fields ⇄ what the handler reads;
 response shape ⇄ what the JS consumes (JSON envelope vs raw HTML —
 markup-swap endpoints MUST return raw HTML); any custom header the repo's
 convention requires is present; after-injection re-binding
 (`apos.util.runPlayers( el )` or equivalent) present when HTML is swapped.
+
+**L7. Multi-locale → switcher.** If `@apostrophecms/i18n` configures more than
+one locale, a visitor-facing language switcher must exist in a layout template
+(built from `data.localizations`), render on EVERY page type (home, index, piece
+show, custom pages), and actually navigate — follow one of its links and confirm
+it lands on the translated document, not a 404 or the untranslated original.
+Also check a **404 URL**: core does not populate `data.localizations` on a
+notFound render, so a switcher gated on it vanishes there unless the layout
+has a fallback branch. Report N-A for single-locale projects. Markup existing is not sufficient
+evidence: state whether the links resolve.
 
 **L6. Template → design contract.** Every class the SCSS styles exists in the
 markup; classes in markup with no styles anywhere (flag as possibly-intended);
@@ -75,6 +88,6 @@ specialist agent's output is at fault and what its handoff note should have
 contained.
 
 ## Output contract
-A verdict table (L1–L6 × OK/BROKEN/N-A), then details per BROKEN link:
+A verdict table (L1–L7 × OK/BROKEN/N-A), then details per BROKEN link:
 evidence (file:line), the contract violated, the one-line fix, and the
 responsible layer. End with: "SLICE LINKED" or "SLICE BROKEN (n links)".

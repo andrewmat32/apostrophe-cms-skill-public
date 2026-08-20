@@ -1,24 +1,34 @@
 # apostrophe-cms — a self-verifying Claude Code skill for ApostropheCMS
 
 A skill + agent team for working in [ApostropheCMS](https://apostrophecms.com)
-3.x/4.x projects with Claude Code: schema/module patterns, relationships and
-their silent-failure traps, fragments/templating, widget players and vite
-bundles, AJAX endpoints, admin-UI (modals, admin bar, `ui/apos` Vue), rich-text
-configuration, SCSS placement — plus two mechanical tools and seven specialist
+3.x/4.x projects with Claude Code: module and schema patterns, all 26 field
+types and their traps, relationships and the silent failures around
+projections, fragments and templating, i18n and multi-locale sites, widget
+players and vite bundles, AJAX endpoints, media (images, attachments, video),
+editor-controlled design (global styles, widget styles, layout widgets),
+draft/publish and editorial workflow, admin-UI (modals, admin bar, `ui/apos`
+Vue), and SCSS placement — plus two mechanical tools and seven specialist
 subagents.
+
+Its bias is toward the things that **fail silently**: an option that isn't real,
+a projection that drops a field, a `required` that isn't enforced server-side, a
+hook nothing consumes, a cascade whose key is shadowed. Those cost hours and
+produce no error message.
 
 **What makes it different: it tests itself.**
 
 - `tests/verify-docs.js` pins every official API/syntax claim against the
   official docs pages **and Apostrophe core source** in `node_modules` — run it
   after an Apostrophe upgrade and it tells you exactly which claims moved.
-- `tests/verify.js` pins the skill's own integrity (reference router, agent
-  definitions, tool parseability, portability) and runs generic sanity checks
-  on any Apostrophe repo you point it at.
+- `tests/verify.js` pins the skill's own integrity — the reference router, agent
+  definitions, tool parseability, portability, and that **every citation
+  resolves** (no pointer to a reference file or numbered trap that doesn't
+  exist) — and runs generic sanity checks on any Apostrophe repo you point it at.
 - `tools/lint-apos.js` mechanically catches the traps that look right and
   aren't: `deferred: true` (not a real option), relationship `project:`
   outside `builders:` (silently ignored), unregistered modules, bundle keys
-  matching no `ui/src` file, i18n locale-parity gaps, unguarded `_field[0]`.
+  matching no `ui/src` file, i18n locale-parity gaps, unguarded `_field[0]`, and
+  a multi-locale site that ships no visitor-facing language switcher.
 
 ## Quick start
 
@@ -40,7 +50,7 @@ node ~/.claude/skills/apostrophe-cms/tests/verify-docs.js
 | `CHEATSHEET.md` | One-page syntax reference for quick lookups. |
 | `GUIDE.md` | The human manual: install, how the agents cooperate, maintenance workflow. |
 | `CHANGELOG.md` | What changed and which field test taught it. |
-| `references/` | Nine deep-dive references (below) loaded on demand, per task. |
+| `references/` | Thirteen deep-dive references (below) loaded on demand, per task. |
 | `agents/` | Seven specialist subagent definitions (below). |
 | `tools/` | Two mechanical analyzers runnable on any Apostrophe repo (below). |
 | `tests/` | The self-verification suites (below). |
@@ -57,6 +67,10 @@ node ~/.claude/skills/apostrophe-cms/tests/verify-docs.js
 | `services-and-data.md` | External APIs, caching, Mongo access, settings. |
 | `globals-config-and-scoping.md` | Config layers, the global doc, `req.data`, window vs shared vs player JS. |
 | `mechanisms-and-ops.md` | CLI tasks, event handlers, async components, seeding, admin-UI customization, images, errors, deployment (incl. `release-id`). |
+| `schema-fields.md` | All 26 field types, cross-cutting field options, and the field traps (server-side `required`, conditional-field resets, array `limit` vs `max`). |
+| `styles-and-layout.md` | Editor-controlled design: global styles, widget styles, layout/column widgets and the gap system. |
+| `media.md` | Images, attachments, files, video/oembed, uploadfs, image sizes, crop vs focal point. |
+| `editorial-workflow.md` | Draft/publish, roles, submitted drafts, `apos.notify`, keyboard commands, archive vs delete. |
 | `examples.md` | Copy-paste cookbook: a working starting point for every element type. |
 
 ### The seven agents
@@ -97,7 +111,7 @@ repeatedly caught real cross-layer bugs the producer chain missed.
 
 | Suite | What it pins |
 |---|---|
-| `tests/verify.js` | The skill's own integrity: reference router targets exist, agent frontmatter parses, tools parse, sanitization pins hold; plus generic sanity checks on any repo path you pass as an argument. |
+| `tests/verify.js` | The skill's own integrity: reference router targets exist, every citation resolves (no pointer to a missing reference file or a missing numbered trap), agent frontmatter parses, tools parse, sanitization pins hold; plus generic sanity checks on any repo path you pass as an argument. |
 | `tests/verify-docs.js` | Every official API/syntax claim the skill teaches, checked against the official docs pages and Apostrophe core source (set `APOS_CORE_PATH` or run near a `node_modules/apostrophe`). |
 
 ## Provenance

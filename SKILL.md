@@ -92,6 +92,10 @@ resolvers) into a project that doesn't have it.
 | dynamic data on a page, AJAX endpoint, click-to-fetch HTML | references/frontend-backend-flow.md |
 | reusable template chunk, template conventions, `__t`, areas | references/templating-fragments.md |
 | widget player, vite bundle, Alpine/htmx, SCSS, shared browser helpers | references/client-js.md |
+| editor-controlled design: global styles, widget styles, layout/column widgets | references/styles-and-layout.md |
+| any schema field type, field options (`if`, `readOnly`, `help`…), field traps | references/schema-fields.md |
+| images, attachments, files, video/oembed, uploadfs, image sizes | references/media.md |
+| draft/publish, roles, submitted drafts, apos.notify, shortcuts, the archive | references/editorial-workflow.md |
 | calling external APIs, caching, Mongo access, settings | references/services-and-data.md |
 | config/settings/global doc, helper ownership, window vs shared vs player JS, req.data | references/globals-config-and-scoping.md |
 | CLI tasks, event handlers, admin UI, caching layers, images, error/email, SEO, deployment | references/mechanisms-and-ops.md |

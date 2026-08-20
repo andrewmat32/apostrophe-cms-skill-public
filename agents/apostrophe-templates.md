@@ -33,6 +33,17 @@ You are the ApostropheCMS **templates (HTML/Nunjucks)** specialist.
 
 ## Scope — also yours
 - `views/layout.html` and the global template skeleton.
+- ⛔ **More than one locale ⇒ build the visitor-facing language switcher.**
+  Translating keys is only half the job: if `@apostrophecms/i18n` declares 2+
+  locales, a visitor must be able to switch language from ANY page. Build it in
+  `views/layout.html` from core's `data.localizations` (`locale`, `label`,
+  `current`, `available`, `_url`, `homePageUrl`); use `_url` when
+  `available && _url`, else `homePageUrl`, and mark that fallback case. Emit a
+  real control (a `<nav>` with an `aria-label`, `aria-current` on the active
+  one) and hand the design agent class names for a control treatment — NOT faint
+  text. Give it an `{% else %}` fallback too — core omits `data.localizations`
+  on 404 renders, so a gated switcher vanishes there.
+  Recipe: references/templating-fragments.md § i18n.
 - The i18n locale JSONs: add every new key to ALL locales — including any keys
   the backend agent's handoff note requests.
 
@@ -50,6 +61,11 @@ your output.
 
 ## Output contract
 Return: (1) the template/fragment files, (2) the i18n keys added (all locales),
+- **Emit a DOM hook only if something will consume it.** A `data-*` attribute
+  with no JS or CSS reader is dead weight that every future verifier re-flags
+  (one audit found 20 in a single repo). If you add a hook for a player that
+  does not exist yet, say so explicitly in the handoff so the frontend agent
+  either writes it or deletes the attribute.
 (3) a handoff note: class names used (for design) and the DOM hooks provided
 (for frontend).
 

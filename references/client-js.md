@@ -61,6 +61,13 @@ export default () =>
 3. **No bundle at all**: `ui/src/index.js` is auto-added to the main site
    bundle — the simplest form, right for small per-module JS.
 
+Module JS that is **not** a widget player should bind with
+**`apos.util.onReady( fn )`** rather than `DOMContentLoaded`: core runs it on
+initial load *and* again after content refreshes, so behavior survives editor
+re-renders. For markup that appears later (AJAX swaps, editor inserts), pair it
+with a `MutationObserver` on `document.body` keyed off the `data-*` attributes
+your templates render, and make the init function idempotent.
+
 ⚠️ **`deferred: true` is not a real option** — core reads `defer: true` for
 lazy widget loading. `deferred:` is a silent no-op (`lint-apos` E1 finds it).
 
@@ -96,6 +103,36 @@ Alpine re-initializes injected nodes automatically; only non-Alpine listeners
 need manual re-binding.
 
 ## SCSS placement
+
+### ⛔ Full-bleed + padding needs `box-sizing: border-box`
+
+Apostrophe starters ship **normalize.css, which does NOT set
+`box-sizing: border-box`**, and there is no global reset unless the project adds
+one. The near-universal full-bleed idiom therefore overflows:
+
+```scss
+.band {
+    width: 100vw;                        // or width: 100%
+    margin-left: calc(50% - 50vw);
+    padding: 4rem var(--bleed-pad);      // ← content-box ADDS this to the width
+}
+```
+
+The element ends up `100vw + 2 × padding` wide, which widens the **document**,
+not just the element. Two consequences that look unrelated to CSS:
+
+- any `margin-left: auto` content (a header's right-hand group) pins to the
+  phantom width and renders **off-screen at every viewport size**;
+- `body { overflow-x: clip }` hides the scrollbar, so the symptom is invisible
+  until you measure `document.scrollWidth` against `clientWidth`.
+
+Field-proven: a header login button sat off-viewport at 390/768/1280 for exactly
+this reason. Add `box-sizing: border-box` to every element that combines a width
+with horizontal padding — the bands, the header, the footer, the content column
+(the column matters because the bands' `calc(50% - 50vw)` math assumes its
+content box is viewport-wide). Check with
+`document.documentElement.scrollWidth === clientWidth` at several widths.
+
 
 Many production projects centralize ALL site styles through the asset module —
 one entry `modules/asset/ui/src/index.scss` with an import cascade — instead of

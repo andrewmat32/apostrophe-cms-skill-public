@@ -82,6 +82,13 @@ both templates import; the AJAX target is then a thin wrapper looping
 
 ## Security floor for every handler
 
+- **Mind where your middleware is mounted.** A rate limiter (or auth/logging
+  middleware) mounted at a URL prefix such as `/api/v1` never runs for
+  leading-slash routes, which mount at the **site root** — exactly where public
+  visitor endpoints usually live. If you add a public form or search route and
+  want it limited, either register it as a named `/api/v1` route or extend the
+  limiter's mount to cover the bare paths.
+
 - Launder ALL input: `self.apos.launder.string( req.body.x )`,
   `.integer`, `.boolean`, `.id` — every `req.body`/`req.query` read.
 - Admin gating is `self.apos.permission.can( req, 'admin' )` (or

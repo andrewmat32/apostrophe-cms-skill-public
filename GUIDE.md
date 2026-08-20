@@ -75,11 +75,12 @@ upgrades.
 - **Editing a rule or claim**: verify the change against real code/official
   docs first, then pin it as a check in the right test section. Never edit
   without re-running both suites.
-- **Adding house conventions for YOUR workspace**: create a
-  `references/project-differences.md` appendix documenting your repos'
-  conventions and known defects, and add repo-claim checks to `verify.js`
-  (pass your repo paths). The internal edition this skill was derived from
-  works exactly that way.
+- **Adding house conventions for YOUR workspace**: add a
+  `project-differences.md` appendix of your own under `references/`,
+  documenting your repos' conventions and known defects, route it from
+  `SKILL.md`, and add repo-claim checks to `verify.js` (pass your repo paths).
+  The internal edition this skill was derived from works exactly that way.
+  (No such file ships here — this is a suggestion, not a missing file.)
 - **Known limits**: depth follows the official docs plus the mined patterns —
   areas with thin production precedent (headless REST consumption, roles
   beyond admin-gating, programmatic migrations, `@apostrophecms/job`) fall
