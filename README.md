@@ -15,6 +15,43 @@ a projection that drops a field, a `required` that isn't enforced server-side, a
 hook nothing consumes, a cascade whose key is shadowed. Those cost hours and
 produce no error message.
 
+## What the agent team is for
+
+Getting Apostrophe code working is usually not a writing problem, it is an
+**iteration** problem. Code that puts `project:` at the wrong nesting level,
+defines `load()` where it replaces the one doing the joining, or emits a hook
+nothing consumes will boot cleanly and render a page — it just won't do what you
+asked. There is no error. You find out by running it, noticing the image is
+missing or the filter does nothing, going back, and repeating. That loop is most
+of the real cost of the work, and an assistant that only writes code doesn't
+remove it — it feeds it.
+
+This skill splits the work the way the framework is actually layered — backend,
+templates, browser JS, SCSS, admin UI — and makes each specialist hand the next
+one an **explicit contract**: the data shape it produces, the DOM hooks it emits,
+the class names it expects. Subagents share no memory, so that note is the only
+wire between them, which forces the contract to be written down instead of
+assumed.
+
+Then two read-only verifiers check the seams rather than the prose:
+
+- the **integrator** traces one feature end to end — registration → relationships
+  → template data → DOM hooks → endpoint → CSS — and confirms every link actually
+  connects, against a running site rather than by reading;
+- the **reviewer** audits the diff against the failure patterns that don't
+  announce themselves.
+
+The aim is a handoff you can use, not a draft you debug into existence.
+
+**It does not always get there on the first pass, and the design assumes that.**
+In the run that produced this skill's own test fixture, the producing agents
+shipped a form endpoint that 404'd on every submission, because page-type modules
+mount their API routes under a prefix almost nobody expects. Static review missed
+it; the integrator caught it with a live request as evidence, and the trap is now
+documented in `references/frontend-backend-flow.md`. That is the intended shape:
+plausible-looking code is the normal failure mode, so the verification layer is
+not optional polish — it is the part that makes the output trustworthy.
+
 **What makes it different: it tests itself.**
 
 - `tests/verify-docs.js` pins every official API/syntax claim against the
@@ -95,10 +132,14 @@ Two read-only **verifiers**:
 
 Recommended pipeline for cross-layer features: **backend → templates →
 frontend + design in parallel → integrator → reviewer**, pasting each agent's
-handoff note verbatim into the next agent's prompt (subagents share no
-context). Admin-facing work swaps the middle: backend → admin-ui. In field
-tests this pipeline built complete multi-locale sites, and the integrator has
-repeatedly caught real cross-layer bugs the producer chain missed.
+handoff note **verbatim** into the next agent's prompt — subagents share no
+context, so that note is the contract (see *What the agent team is for* above).
+Admin-facing work swaps the middle: backend → admin-ui.
+
+In field tests this pipeline built complete multi-locale sites end to end, and
+the integrator has repeatedly caught cross-layer bugs the producing chain let
+through. Dispatching an agent for a single-layer touch-up is overhead — the
+value is in the handoffs and the verification, not in the delegation itself.
 
 ### Tools
 
