@@ -1,4 +1,4 @@
-# apostrophe-cms — a self-verifying Claude Code skill for ApostropheCMS
+# apostrophe-cms: a self-verifying Claude Code skill for ApostropheCMS
 
 A skill + agent team for working in [ApostropheCMS](https://apostrophecms.com)
 3.x/4.x projects with Claude Code: module and schema patterns, all 26 field
@@ -7,7 +7,7 @@ projections, fragments and templating, i18n and multi-locale sites, widget
 players and vite bundles, AJAX endpoints, media (images, attachments, video),
 editor-controlled design (global styles, widget styles, layout widgets),
 draft/publish and editorial workflow, admin-UI (modals, admin bar, `ui/apos`
-Vue), and SCSS placement — plus two mechanical tools and seven specialist
+Vue), and SCSS placement, plus two mechanical tools and seven specialist
 subagents.
 
 Its bias is toward the things that **fail silently**: an option that isn't real,
@@ -20,14 +20,14 @@ produce no error message.
 Getting Apostrophe code working is usually not a writing problem, it is an
 **iteration** problem. Code that puts `project:` at the wrong nesting level,
 defines `load()` where it replaces the one doing the joining, or emits a hook
-nothing consumes will boot cleanly and render a page — it just won't do what you
+nothing consumes will boot cleanly and render a page. It just won't do what you
 asked. There is no error. You find out by running it, noticing the image is
 missing or the filter does nothing, going back, and repeating. That loop is most
 of the real cost of the work, and an assistant that only writes code doesn't
-remove it — it feeds it.
+remove that loop. It feeds it.
 
-This skill splits the work the way the framework is actually layered — backend,
-templates, browser JS, SCSS, admin UI — and makes each specialist hand the next
+This skill splits the work the way the framework is actually layered (backend,
+templates, browser JS, SCSS, admin UI) and makes each specialist hand the next
 one an **explicit contract**: the data shape it produces, the DOM hooks it emits,
 the class names it expects. Subagents share no memory, so that note is the only
 wire between them, which forces the contract to be written down instead of
@@ -35,9 +35,10 @@ assumed.
 
 Then two read-only verifiers check the seams rather than the prose:
 
-- the **integrator** traces one feature end to end — registration → relationships
-  → template data → DOM hooks → endpoint → CSS — and confirms every link actually
-  connects, against a running site rather than by reading;
+- the **integrator** traces one feature end to end, from registration through
+  relationships, template data, DOM hooks and the endpoint to the CSS, and
+  confirms every link actually connects, against a running site rather than by
+  reading;
 - the **reviewer** audits the diff against the failure patterns that don't
   announce themselves.
 
@@ -50,17 +51,18 @@ mount their API routes under a prefix almost nobody expects. Static review misse
 it; the integrator caught it with a live request as evidence, and the trap is now
 documented in `references/frontend-backend-flow.md`. That is the intended shape:
 plausible-looking code is the normal failure mode, so the verification layer is
-not optional polish — it is the part that makes the output trustworthy.
+not optional polish. It is the part that makes the output trustworthy.
 
 **What makes it different: it tests itself.**
 
 - `tests/verify-docs.js` pins every official API/syntax claim against the
-  official docs pages **and Apostrophe core source** in `node_modules` — run it
+  official docs pages **and Apostrophe core source** in `node_modules`. Run it
   after an Apostrophe upgrade and it tells you exactly which claims moved.
-- `tests/verify.js` pins the skill's own integrity — the reference router, agent
+- `tests/verify.js` pins the skill's own integrity: the reference router, agent
   definitions, tool parseability, portability, and that **every citation
   resolves** (no pointer to a reference file or numbered trap that doesn't
-  exist) — and runs generic sanity checks on any Apostrophe repo you point it at.
+  exist). It also runs generic sanity checks on any Apostrophe repo you point it
+  at.
 - `tools/lint-apos.js` mechanically catches the traps that look right and
   aren't: `deferred: true` (not a real option), relationship `project:`
   outside `builders:` (silently ignored), unregistered modules, bundle keys
@@ -132,13 +134,13 @@ Two read-only **verifiers**:
 
 Recommended pipeline for cross-layer features: **backend → templates →
 frontend + design in parallel → integrator → reviewer**, pasting each agent's
-handoff note **verbatim** into the next agent's prompt — subagents share no
+handoff note **verbatim** into the next agent's prompt. Subagents share no
 context, so that note is the contract (see *What the agent team is for* above).
 Admin-facing work swaps the middle: backend → admin-ui.
 
 In field tests this pipeline built complete multi-locale sites end to end, and
 the integrator has repeatedly caught cross-layer bugs the producing chain let
-through. Dispatching an agent for a single-layer touch-up is overhead — the
+through. Dispatching an agent for a single-layer touch-up is overhead. The
 value is in the handoffs and the verification, not in the delegation itself.
 
 ### Tools
@@ -159,7 +161,7 @@ value is in the handoffs and the verification, not in the delegation itself.
 
 The patterns were mined from production Apostrophe codebases, adversarially
 audited, and verified against Apostrophe core (4.22–4.32). This public edition
-contains no project-identifying material — everything is either
+contains no project-identifying material. Everything is either
 official-docs/core-verified or framed as a convention to discover in the repo
 you're working in (which is itself the skill's core rule: imitate the
 codebase, not memory). `verify.js` enforces that with sanitization pins.
